@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<script>
+    // --- PASSHUB SECURITY SENSOR ---
+    // If no wristband is found, kick them back to the Gate
+    if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+        window.location.href = "PassHub.html";
+    }
+</script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PassHub | Documents</title>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <style>
+        /* --- QUIET LUXURY PALETTE --- */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #E8E6E1 0%, #D8D4CD 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #4A4A4A; 
+            --text-sub: #8C8C8C;  
+            --accent: #6B6B61;    
+            --danger: #B05C5C;
+            --success: #5C946E;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background: var(--bg-gradient);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            overflow: hidden; 
+        }
+
+        /* --- HEADER --- */
+        header {
+            height: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 18px;
+            color: var(--accent);
+            margin: 0;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover { color: var(--text-main); }
+        .nav-btn.primary {
+            background: var(--accent);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        .nav-btn.primary:hover { opacity: 0.9; }
+
+        /* --- MAIN CONTAINER --- */
+        main {
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        /* --- VIEW 1: CATEGORY GRID (DASHBOARD) --- */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .cat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 25px 15px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 140px;
+        }
+        .cat-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.85);
+            box-shadow: var(--shadow);
+        }
+
+        .cat-icon-symbol {
+            font-size: 36px;
+            color: var(--accent);
+            margin-bottom: 15px;
+            opacity: 0.8;
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; 
+        }
+
+        .cat-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .cat-count { font-size: 10px; color: var(--text-sub); }
+
+        /* --- VIEW 2: LIST VIEW (INSIDE FOLDER) --- */
+        .list-container {
+            max-width: 700px;
+            margin: 0 auto;
+            display: none; 
+            animation: fadeIn 0.4s ease;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: 10px;
+        }
+        .current-cat-title { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); }
+
+        .entry-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.4);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .entry-row:hover { background: white; border-color: rgba(0,0,0,0.05); }
+
+        /* Initial Circle for Documents (instead of favicon) */
+        .doc-initial { 
+            width: 32px; height: 32px; 
+            background: #D8D4CD; 
+            color: var(--accent);
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold;
+            margin-right: 15px;
+            text-transform: uppercase;
+        }
+        
+        .entry-info { flex-grow: 1; }
+        .entry-plat { font-size: 13px; font-weight: 600; color: var(--text-main); } /* Doc Type */
+        .entry-sub { font-size: 11px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px;} /* Organization */
+        .arrow-icon { opacity: 0.3; font-size: 12px; }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-card {
+            background: #FDFDFD;
+            width: 420px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 5px; letter-spacing: 1px; }
+        .form-input, .form-select {
+            width: 100%; padding: 10px;
+            background: #F5F5F0; border: 1px solid #E0E0E0;
+            border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box;
+            color: var(--text-main);
+        }
+        .form-input:focus { background: white; border-color: var(--accent); }
+
+        /* The Side-by-Side Box */
+        .dual-input-row { display: flex; gap: 10px; }
+        .dual-input-row .form-group { flex: 1; margin-bottom: 0; }
+
+        .toggle-options {
+            font-size: 11px; color: var(--accent); cursor: pointer; text-align: center; margin: 15px 0; text-decoration: underline;
+        }
+        .hidden-fields { display: none; padding-top: 10px; border-top: 1px solid #eee; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-main { flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-sec { flex: 1; padding: 12px; background: transparent; border: 1px solid #ccc; color: #888; border-radius: 6px; cursor: pointer; }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+
+        /* Detail View Specifics */
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; align-items: baseline;}
+        .detail-label { font-size: 10px; color: #999; text-transform: uppercase; }
+        .detail-val { font-size: 13px; color: #333; font-weight: 500; font-family: monospace; text-align: right; max-width: 60%; word-break: break-word; }
+        
+        .validity-tag {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .tag-active { background: rgba(92, 148, 110, 0.1); color: var(--success); }
+        .tag-expired { background: rgba(176, 92, 92, 0.1); color: var(--danger); }
+
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="back-btn" class="nav-btn">← PassHub</button>
+        <h1>Documents</h1>
+        <button id="new-btn" class="nav-btn primary">+ New</button>
+    </header>
+
+    <main>
+        <div id="category-dashboard" class="category-grid">
+            </div>
+
+        <div id="entry-list-view" class="list-container">
+            <div class="list-header">
+                <span id="active-cat-title" class="current-cat-title">Category</span>
+                <span id="active-cat-count" style="font-size:11px; color:#999;">0 Items</span>
+            </div>
+            <div id="entries-wrapper">
+                </div>
+        </div>
+    </main>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size:14px; text-transform:uppercase; color:var(--accent); margin-bottom:20px; text-align:center;">File Document</h2>
+            <form id="doc-form">
+                
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="inp-category" class="form-select" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Organization</label>
+                    <input type="text" id="inp-org" class="form-input" placeholder="e.g. DEPed, PhilHealth" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Document Type</label>
+                    <input type="text" id="inp-doctype" class="form-input" placeholder="e.g. Diploma, ID Card" required>
+                </div>
+
+                <div class="dual-input-row" style="margin-bottom:15px;">
+                    <div class="form-group">
+                        <label class="form-label">Label</label>
+                        <input type="text" id="inp-custom-label" class="form-input" placeholder="e.g. ID No.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Value / Number</label>
+                        <input type="text" id="inp-custom-val" class="form-input" placeholder="e.g. 123-456">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Date Issued</label>
+                    <input type="date" id="inp-date-issue" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Validity (From - To)</label>
+                    <div class="dual-input-row">
+                        <input type="date" id="inp-date-valid-start" class="form-input">
+                        <input type="date" id="inp-date-valid-end" class="form-input">
+                    </div>
+                    <div style="font-size:9px; color:#999; margin-top:3px;">Leave 'To' blank if no expiration.</div>
+                </div>
+
+                <div class="toggle-options" onclick="toggleOptionals()">+ Show Additional Fields</div>
+                
+                <div id="optional-fields" class="hidden-fields">
+                    <div class="form-group"><label class="form-label">Status</label><input type="text" id="inp-status" class="form-input" placeholder="Active, Pending..."></div>
+                    <div class="form-group"><label class="form-label">Address</label><input type="text" id="inp-address" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Email</label><input type="email" id="inp-email" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Link (Read Only)</label><input type="text" id="inp-link" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Notes</label><textarea id="inp-notes" class="form-input" rows="2"></textarea></div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-sec" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-main">Save File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detail-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <div style="text-align:center; margin-bottom:20px;">
+                <span class="material-symbols-outlined" style="font-size:40px; color:var(--accent); margin-bottom:10px;">description</span>
+                <h2 id="detail-doctype" style="font-size:16px; margin:0; color:var(--text-main);">Type</h2>
+                <div id="detail-org" style="font-size:11px; text-transform:uppercase; color:var(--text-sub); margin-top:5px; font-weight:bold; letter-spacing:1px;">Org</div>
+                <div id="detail-validity-tag"></div> </div>
+
+            <div id="detail-content"></div>
+
+            <div class="btn-group">
+                <button id="btn-delete" class="btn-sec btn-danger">Delete</button>
+                <button id="btn-edit" class="btn-sec">Edit</button>
+                <button onclick="closeDetail()" class="btn-main">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <script>
+        // --- 1. CONFIG ---
+        
+        const CATEGORIES = [
+            "Document Forms", 
+            "Certificates", 
+            "Residency", 
+            "Cards", 
+            "IDs"
+        ];
+
+        const ICONS = {
+            "Document Forms": "article_person",
+            "Certificates": "badge",
+            "Residency": "location_home",
+            "Cards": "credit_card",
+            "IDs": "id_card"
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD4AwI1GwDvtx8y6yx6We-oSzV92GGCEvE",
+            authDomain: "access-vault-a3d09.firebaseapp.com",
+            databaseURL: "https://access-vault-a3d09-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "access-vault-a3d09",
+            storageBucket: "access-vault-a3d09.firebasestorage.app",
+            messagingSenderId: "43855013406",
+            appId: "1:43855013406:web:6a954853b8c14ec785b00f",
+            measurementId: "G-Q925D3PS6V"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const docsRef = db.ref('doc_entries'); // NEW DATABASE NODE
+
+        let allDocs = {};
+        let currentMode = 'dashboard';
+        let currentCategory = null;
+        let currentEditingId = null;
+
+        // --- 2. LOGIC ---
+
+        docsRef.on('value', (snapshot) => {
+            allDocs = snapshot.val() || {};
+            renderDashboard();
+            if(currentMode === 'list' && currentCategory) {
+                renderList(currentCategory);
+            }
+        });
+
+        function renderDashboard() {
+            const grid = document.getElementById('category-dashboard');
+            grid.innerHTML = '';
+
+            CATEGORIES.forEach(cat => {
+                let count = 0;
+                Object.values(allDocs).forEach(item => {
+                    if (item.category === cat) count++;
+                });
+
+                const iconName = ICONS[cat] || "folder";
+
+                const card = document.createElement('div');
+                card.className = 'cat-card';
+                card.innerHTML = `
+                    <span class="material-symbols-outlined cat-icon-symbol">${iconName}</span>
+                    <div class="cat-title">${cat}</div>
+                    <div class="cat-count">${count} Files</div>
+                `;
+                card.onclick = () => openCategory(cat);
+                grid.appendChild(card);
+            });
+        }
+
+        function openCategory(cat) {
+            currentMode = 'list';
+            currentCategory = cat;
+            
+            document.getElementById('category-dashboard').classList.add('hidden');
+            document.getElementById('entry-list-view').style.display = 'block'; 
+            document.getElementById('back-btn').textContent = "← Back to Grid";
+            document.getElementById('active-cat-title').textContent = cat;
+            
+            renderList(cat);
+        }
+
+        function renderList(cat) {
+            const listWrapper = document.getElementById('entries-wrapper');
+            listWrapper.innerHTML = '';
+            
+            // Sort Alphabetically by Document Type
+            const filtered = Object.entries(allDocs).filter(([key, item]) => item.category === cat);
+            filtered.sort((a, b) => a[1].docType.localeCompare(b[1].docType));
+
+            document.getElementById('active-cat-count').textContent = `${filtered.length} Items`;
+
+            if (filtered.length === 0) {
+                listWrapper.innerHTML = '<div style="text-align:center; color:#ccc; margin-top:40px;">No documents filed.</div>';
+                return;
+            }
+
+            filtered.forEach(([key, item]) => {
+                // Get initials for the circle
+                const initial = item.docType.charAt(0);
+
+                const row = document.createElement('div');
+                row.className = 'entry-row';
+                row.innerHTML = `
+                    <div class="doc-initial">${initial}</div>
+                    <div class="entry-info">
+                        <div class="entry-plat">${item.docType}</div>
+                        <div class="entry-sub">${item.org}</div>
+                    </div>
+                    <span class="arrow-icon">➔</span>
+                `;
+                row.onclick = () => openDetail(key, item);
+                listWrapper.appendChild(row);
+            });
+        }
+
+        document.getElementById('back-btn').onclick = () => {
+            if(currentMode === 'list') {
+                currentMode = 'dashboard';
+                currentCategory = null;
+                document.getElementById('category-dashboard').classList.remove('hidden');
+                document.getElementById('entry-list-view').style.display = 'none';
+                document.getElementById('back-btn').textContent = "← PassHub";
+            } else {
+                window.location.href = "PassHub.html"; // Or PassHub-landing_page.html
+            }
+        };
+
+        // --- 3. MODAL & FORM ---
+
+        const modalOverlay = document.getElementById('modal-overlay');
+        const detailOverlay = document.getElementById('detail-overlay');
+        const form = document.getElementById('doc-form');
+        const catSelect = document.getElementById('inp-category');
+
+        CATEGORIES.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            catSelect.appendChild(opt);
+        });
+
+        document.getElementById('new-btn').onclick = () => {
+            currentEditingId = null;
+            form.reset();
+            if(currentCategory) catSelect.value = currentCategory;
+            modalOverlay.style.display = 'flex';
+        };
+
+        window.closeModal = () => { modalOverlay.style.display = 'none'; };
+        window.closeDetail = () => { detailOverlay.style.display = 'none'; };
+        
+        window.toggleOptionals = () => {
+            const el = document.getElementById('optional-fields');
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        };
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const data = {
+                category: document.getElementById('inp-category').value,
+                org: document.getElementById('inp-org').value,
+                docType: document.getElementById('inp-doctype').value,
+                customLabel: document.getElementById('inp-custom-label').value,
+                customVal: document.getElementById('inp-custom-val').value,
+                dateIssue: document.getElementById('inp-date-issue').value,
+                dateValidStart: document.getElementById('inp-date-valid-start').value,
+                dateValidEnd: document.getElementById('inp-date-valid-end').value,
+                
+                status: document.getElementById('inp-status').value,
+                address: document.getElementById('inp-address').value,
+                email: document.getElementById('inp-email').value,
+                link: document.getElementById('inp-link').value,
+                notes: document.getElementById('inp-notes').value,
+                timestamp: Date.now()
+            };
+
+            if (currentEditingId) {
+                docsRef.child(currentEditingId).update(data);
+            } else {
+                docsRef.push(data);
+            }
+            closeModal();
+        });
+
+        // --- 4. DETAILS & VALIDITY LOGIC ---
+
+        function calculateValidity(toDate) {
+            if (!toDate) return { text: "No Expiration", class: "tag-active" };
+            
+            const end = new Date(toDate);
+            const now = new Date();
+            
+            // Clear time for fair comparison
+            end.setHours(0,0,0,0);
+            now.setHours(0,0,0,0);
+
+            if (end < now) {
+                return { text: "EXPIRED", class: "tag-expired" };
+            } else {
+                // Calculate difference
+                const diffTime = Math.abs(end - now);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                
+                let timeStr = "";
+                if(diffDays > 365) {
+                    const yrs = (diffDays / 365).toFixed(1);
+                    timeStr = `${yrs} Years remaining`;
+                } else if (diffDays > 30) {
+                    const months = Math.ceil(diffDays / 30);
+                    timeStr = `${months} Months remaining`;
+                } else {
+                    timeStr = `${diffDays} Days remaining`;
+                }
+                
+                return { text: timeStr, class: "tag-active" };
+            }
+        }
+
+        window.openDetail = (key, item) => {
+            document.getElementById('detail-doctype').textContent = item.docType;
+            document.getElementById('detail-org').textContent = item.org;
+            
+            // Validity Check
+            const validStatus = calculateValidity(item.dateValidEnd);
+            const validTag = document.getElementById('detail-validity-tag');
+            validTag.textContent = validStatus.text;
+            validTag.className = `validity-tag ${validStatus.class}`;
+
+            const content = document.getElementById('detail-content');
+            
+            // Helper for empty fields
+            const displayDate = (d) => d ? new Date(d).toLocaleDateString() : '-';
+
+            content.innerHTML = `
+                ${makeRow('Category', item.category)}
+                ${makeRow(item.customLabel || 'ID/Ref', item.customVal, true)}
+                ${makeRow('Issued', displayDate(item.dateIssue))}
+                ${makeRow('Valid From', displayDate(item.dateValidStart))}
+                ${makeRow('Valid Until', displayDate(item.dateValidEnd))}
+                <div style="height:10px;"></div>
+                ${makeRow('Status', item.status)}
+                ${makeRow('Address', item.address)}
+                ${makeRow('Email', item.email)}
+                ${makeRow('Link', item.link)}
+                
+                <div style="margin-top:15px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px;">
+                    <strong>Notes:</strong><br>${item.notes || '-'}
+                </div>
+            `;
+
+            document.getElementById('btn-delete').onclick = () => deleteEntry(key);
+            document.getElementById('btn-edit').onclick = () => editEntry(key, item);
+            detailOverlay.style.display = 'flex';
+        };
+
+        function makeRow(label, val, copyable=false) {
+            if(!val || val === '-') return '';
+            return `
+                <div class="detail-row">
+                    <span class="detail-label">${label}</span>
+                    <span class="detail-val">
+                        ${val} 
+                        </span>
+                </div>
+            `;
+        }
+
+        window.deleteEntry = (key) => {
+            if(confirm("Permanently delete this document record?")) {
+                docsRef.child(key).remove();
+                closeDetail();
+            }
+        };
+
+        window.editEntry = (key, item) => {
+            currentEditingId = key;
+            closeDetail();
+            
+            document.getElementById('inp-category').value = item.category;
+            document.getElementById('inp-org').value = item.org;
+            document.getElementById('inp-doctype').value = item.docType;
+            document.getElementById('inp-custom-label').value = item.customLabel || '';
+            document.getElementById('inp-custom-val').value = item.customVal || '';
+            
+            document.getElementById('inp-date-issue').value = item.dateIssue || '';
+            document.getElementById('inp-date-valid-start').value = item.dateValidStart || '';
+            document.getElementById('inp-date-valid-end').value = item.dateValidEnd || '';
+            
+            document.getElementById('inp-status').value = item.status || '';
+            document.getElementById('inp-address').value = item.address || '';
+            document.getElementById('inp-email').value = item.email || '';
+            document.getElementById('inp-link').value = item.link || '';
+            document.getElementById('inp-notes').value = item.notes || '';
+            
+            // Show optionals if populated
+            if(item.status || item.address || item.email || item.link || item.notes) {
+                document.getElementById('optional-fields').style.display = 'block';
+            }
+
+            modalOverlay.style.display = 'flex';
+        };
+    </script>
+</body>
+</html>

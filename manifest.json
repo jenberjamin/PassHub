@@ -1,0 +1,20 @@
+{
+  "name": "LifeHub | PassHub",
+  "short_name": "PassHub",
+  "start_url": "PassHub.html",
+  "display": "standalone",
+  "background_color": "#E8E6E1",
+  "theme_color": "#6B6B61",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3064/3064197.png", 
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.imgur.com/CIQfhoK.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

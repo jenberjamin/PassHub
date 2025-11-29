@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<script>
+    // --- PASSHUB SECURITY SENSOR ---
+    // If no wristband is found, kick them back to the Gate
+    if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+        window.location.href = "PassHub.html";
+    }
+</script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PassHub | Connections</title>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <style>
+        /* --- QUIET LUXURY PALETTE --- */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #E8E6E1 0%, #D8D4CD 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #4A4A4A; 
+            --text-sub: #8C8C8C;  
+            --accent: #6B6B61;    
+            --danger: #B05C5C;
+            --input-bg: #F5F5F0;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background: var(--bg-gradient);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            overflow: hidden; 
+        }
+
+        /* --- HEADER --- */
+        header {
+            height: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 18px;
+            color: var(--accent);
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .nav-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-sub); transition: color 0.3s;
+        }
+        .nav-btn:hover { color: var(--text-main); }
+        .nav-btn.primary {
+            background: var(--accent); color: white; padding: 8px 16px; border-radius: 4px;
+        }
+
+        /* --- TOOLBAR (Search & Filter) --- */
+        .toolbar {
+            padding: 20px 40px;
+            display: flex;
+            gap: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            outline: none;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+        .search-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            font-size: 18px; color: var(--text-sub);
+        }
+
+        .filter-select {
+            padding: 0 20px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-main);
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* --- CONTACT LIST --- */
+        .list-container {
+            height: calc(100vh - 160px); /* Header + Toolbar space */
+            overflow-y: auto;
+            padding: 0 40px 40px 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .contact-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.4);
+            margin-bottom: 10px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .contact-row:hover {
+            background: white;
+            transform: scale(1.01);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        /* Avatar Circle */
+        .avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: #D8D4CD;
+            color: var(--accent);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 16px; font-weight: 500;
+            margin-right: 15px;
+            text-transform: uppercase;
+        }
+
+        .contact-info { flex: 1; }
+        .contact-name { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px;}
+        .contact-rel { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); }
+        
+        .contact-meta { font-size: 11px; color: #999; text-align: right; }
+
+        /* --- MODAL FORMS --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            z-index: 100; display: none; justify-content: center; align-items: center;
+        }
+        
+        .modal-card {
+            background: #FDFDFD;
+            width: 450px;
+            max-height: 90vh;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        /* Form Styling */
+        .section-title {
+            font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 20px 0 10px 0; font-weight: bold;
+        }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 5px; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 10px;
+            background: var(--input-bg); border: 1px solid #E0E0E0;
+            border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box;
+            color: var(--text-main);
+        }
+        .form-input:focus { background: white; border-color: var(--accent); }
+
+        /* Dynamic Phone Field */
+        .phone-row { display: flex; gap: 5px; margin-bottom: 5px; }
+        .add-btn-small {
+            background: #eee; border: none; color: #666; cursor: pointer; width: 30px; border-radius: 4px;
+        }
+        .add-btn-small:hover { background: #ddd; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-main { flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-sec { flex: 1; padding: 12px; background: transparent; border: 1px solid #ccc; color: #888; border-radius: 6px; cursor: pointer; }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+
+        /* Detail View Specifics */
+        .detail-header { text-align: center; margin-bottom: 20px; }
+        .detail-name { font-size: 18px; font-weight: 300; letter-spacing: 1px; color: var(--text-main); }
+        .detail-rel { 
+            display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; 
+            background: #eee; padding: 3px 8px; border-radius: 4px; margin-top: 5px; color: #666;
+        }
+        
+        .detail-row { display: flex; margin-bottom: 10px; font-size: 13px; }
+        .detail-icon { width: 24px; color: var(--accent); font-size: 16px; padding-top: 2px;}
+        .detail-val { flex: 1; color: #444; word-break: break-word; }
+        .detail-label { display: block; font-size: 9px; color: #999; text-transform: uppercase; margin-bottom: 2px; }
+
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .hidden { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="back-btn" class="nav-btn">← PassHub</button>
+        <h1>Connections</h1>
+        <button id="new-btn" class="nav-btn primary">+ New</button>
+    </header>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" id="search-input" class="search-input" placeholder="Find contact...">
+        </div>
+        <select id="filter-select" class="filter-select">
+            <option value="All">All Relationships</option>
+            </select>
+    </div>
+
+    <div id="list-container" class="list-container">
+        </div>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <h2 id="modal-title" style="text-align:center; font-size:14px; text-transform:uppercase; color:var(--accent);">New Contact</h2>
+            
+            <form id="contact-form">
+                
+                <div class="section-title">Identity</div>
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="inp-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nickname</label>
+                    <input type="text" id="inp-nick" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Relationship</label>
+                    <select id="inp-rel" class="form-select" required></select>
+                </div>
+
+                <div class="section-title">Contact Info</div>
+                <div class="form-group">
+                    <label class="form-label">Phone Numbers</label>
+                    <div id="phone-container">
+                        <div class="phone-row">
+                            <input type="text" name="phone[]" class="form-input" placeholder="Mobile">
+                            <button type="button" class="add-btn-small" onclick="addPhoneField()">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="inp-email" class="form-input">
+                </div>
+
+                <div class="section-title">Work / Identity</div>
+                <div class="form-group">
+                    <label class="form-label">Company / Org</label>
+                    <input type="text" id="inp-company" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Job Title / Role</label>
+                    <input type="text" id="inp-role" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Work Contact (Phone/Email)</label>
+                    <input type="text" id="inp-work-contact" class="form-input">
+                </div>
+
+                <div class="section-title">Personal Details</div>
+                <div class="form-group">
+                    <label class="form-label">Birthday</label>
+                    <input type="date" id="inp-bday" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <input type="text" id="inp-address" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Related People</label>
+                    <input type="text" id="inp-related" class="form-input" placeholder="Spouse, Sibling, etc.">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Social Media / Website</label>
+                    <input type="text" id="inp-social" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="inp-notes" class="form-textarea" rows="2"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-sec" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-main">Save Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detail-overlay" class="modal-overlay">
+        <div class="modal-card">
+            <div class="detail-header">
+                <div id="detail-initial" class="avatar" style="margin: 0 auto 15px auto; width: 60px; height: 60px; font-size: 24px;"></div>
+                <div id="detail-name" class="detail-name">Name</div>
+                <div id="detail-nick" style="font-size:12px; color:#999; margin-top:4px; font-style:italic;"></div>
+                <div id="detail-rel" class="detail-rel">Relationship</div>
+            </div>
+
+            <div id="detail-body">
+                </div>
+
+            <div class="btn-group">
+                <button id="btn-delete" class="btn-sec btn-danger">Delete</button>
+                <button id="btn-edit" class="btn-sec">Edit</button>
+                <button onclick="closeDetail()" class="btn-main">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+        // --- 1. CONFIG ---
+        const RELATIONSHIPS = [
+            "Close Friend", "Friend", "Acquaintance", 
+            "Family", "Extended Family", 
+            "Professional Contact", "Client", "Community Member", 
+            "Emergency Hotline", "Online Friend", 
+            "Customer Service", "Other"
+        ];
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD4AwI1GwDvtx8y6yx6We-oSzV92GGCEvE",
+            authDomain: "access-vault-a3d09.firebaseapp.com",
+            databaseURL: "https://access-vault-a3d09-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "access-vault-a3d09",
+            storageBucket: "access-vault-a3d09.firebasestorage.app",
+            messagingSenderId: "43855013406",
+            appId: "1:43855013406:web:6a954853b8c14ec785b00f",
+            measurementId: "G-Q925D3PS6V"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const connRef = db.ref('connections');
+
+        // State
+        let allContacts = {};
+        let currentEditingId = null;
+
+        // --- 2. SETUP UI ---
+        
+        // Populate Dropdowns
+        const filterSel = document.getElementById('filter-select');
+        const formRel = document.getElementById('inp-rel');
+        
+        RELATIONSHIPS.forEach(rel => {
+            // Filter
+            const opt1 = document.createElement('option');
+            opt1.value = rel; opt1.textContent = rel;
+            filterSel.appendChild(opt1);
+            
+            // Form
+            const opt2 = document.createElement('option');
+            opt2.value = rel; opt2.textContent = rel;
+            formRel.appendChild(opt2);
+        });
+
+        // --- 3. LOGIC ---
+
+        connRef.on('value', (snapshot) => {
+            allContacts = snapshot.val() || {};
+            renderList();
+        });
+
+        function renderList() {
+            const listContainer = document.getElementById('list-container');
+            listContainer.innerHTML = '';
+            
+            const searchText = document.getElementById('search-input').value.toLowerCase();
+            const filterRel = filterSel.value;
+
+            // Convert to Array & Sort Alphabetically
+            const contactArray = Object.entries(allContacts).sort((a, b) => {
+                return a[1].name.localeCompare(b[1].name);
+            });
+
+            let count = 0;
+
+            contactArray.forEach(([key, item]) => {
+                // Filter Logic
+                const matchSearch = item.name.toLowerCase().includes(searchText) || 
+                                    (item.nickname && item.nickname.toLowerCase().includes(searchText));
+                const matchFilter = filterRel === 'All' || item.relationship === filterRel;
+
+                if (matchSearch && matchFilter) {
+                    count++;
+                    const initials = getInitials(item.name);
+                    
+                    const row = document.createElement('div');
+                    row.className = 'contact-row';
+                    row.innerHTML = `
+                        <div class="avatar">${initials}</div>
+                        <div class="contact-info">
+                            <div class="contact-name">${item.name}</div>
+                            <div class="contact-rel">${item.relationship}</div>
+                        </div>
+                        <div class="contact-meta">
+                            ${item.company ? item.company : ''}
+                        </div>
+                    `;
+                    row.onclick = () => openDetail(key, item);
+                    listContainer.appendChild(row);
+                }
+            });
+
+            if (count === 0) {
+                listContainer.innerHTML = '<div style="text-align:center; color:#ccc; margin-top:40px;">No contacts found.</div>';
+            }
+        }
+
+        // Search & Filter Listeners
+        document.getElementById('search-input').addEventListener('input', renderList);
+        filterSel.addEventListener('change', renderList);
+
+        // --- 4. FORM LOGIC ---
+
+        const modalOverlay = document.getElementById('modal-overlay');
+        const detailOverlay = document.getElementById('detail-overlay');
+        const form = document.getElementById('contact-form');
+
+        document.getElementById('new-btn').onclick = () => {
+            currentEditingId = null;
+            document.getElementById('modal-title').textContent = "New Contact";
+            form.reset();
+            resetPhoneFields(); 
+            modalOverlay.style.display = 'flex';
+        };
+
+        window.closeModal = () => { modalOverlay.style.display = 'none'; };
+        window.closeDetail = () => { detailOverlay.style.display = 'none'; };
+
+        // Dynamic Phones
+        window.addPhoneField = (value = "") => {
+            const container = document.getElementById('phone-container');
+            const div = document.createElement('div');
+            div.className = 'phone-row';
+            div.innerHTML = `
+                <input type="text" name="phone[]" class="form-input" placeholder="Phone Number" value="${value}">
+                <button type="button" class="add-btn-small" onclick="this.parentElement.remove()">-</button>
+            `;
+            container.appendChild(div);
+        };
+
+        function resetPhoneFields() {
+            document.getElementById('phone-container').innerHTML = `
+                <div class="phone-row">
+                    <input type="text" name="phone[]" class="form-input" placeholder="Mobile">
+                    <button type="button" class="add-btn-small" onclick="addPhoneField()">+</button>
+                </div>
+            `;
+        }
+
+        // Save
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Gather Phones
+            const phoneInputs = document.getElementsByName('phone[]');
+            const phones = [];
+            phoneInputs.forEach(input => {
+                if(input.value.trim() !== "") phones.push(input.value.trim());
+            });
+
+            const data = {
+                name: document.getElementById('inp-name').value,
+                nickname: document.getElementById('inp-nick').value,
+                relationship: document.getElementById('inp-rel').value,
+                phones: phones,
+                email: document.getElementById('inp-email').value,
+                company: document.getElementById('inp-company').value,
+                role: document.getElementById('inp-role').value,
+                workContact: document.getElementById('inp-work-contact').value,
+                birthday: document.getElementById('inp-bday').value,
+                address: document.getElementById('inp-address').value,
+                related: document.getElementById('inp-related').value,
+                social: document.getElementById('inp-social').value,
+                notes: document.getElementById('inp-notes').value,
+                timestamp: Date.now()
+            };
+
+            if (currentEditingId) {
+                connRef.child(currentEditingId).update(data);
+            } else {
+                connRef.push(data);
+            }
+            closeModal();
+        });
+
+        // --- 5. DETAIL VIEW ---
+
+        window.openDetail = (key, item) => {
+            document.getElementById('detail-name').textContent = item.name;
+            document.getElementById('detail-nick').textContent = item.nickname ? `"${item.nickname}"` : '';
+            document.getElementById('detail-rel').textContent = item.relationship;
+            document.getElementById('detail-initial').textContent = getInitials(item.name);
+
+            const body = document.getElementById('detail-body');
+            body.innerHTML = '';
+
+            // Render Phones
+            if(item.phones && item.phones.length > 0) {
+                item.phones.forEach(p => {
+                    body.innerHTML += makeDetailRow('call', 'Phone', p);
+                });
+            } else {
+                body.innerHTML += makeDetailRow('call', 'Phone', '-');
+            }
+
+            body.innerHTML += `
+                ${makeDetailRow('mail', 'Email', item.email)}
+                <div style="height:15px; border-bottom:1px solid #eee; margin-bottom:15px;"></div>
+                ${makeDetailRow('apartment', 'Company', item.company)}
+                ${makeDetailRow('badge', 'Role', item.role)}
+                ${makeDetailRow('contact_phone', 'Work Contact', item.workContact)}
+                <div style="height:15px; border-bottom:1px solid #eee; margin-bottom:15px;"></div>
+                ${makeDetailRow('cake', 'Birthday', item.birthday)}
+                ${makeDetailRow('home', 'Address', item.address)}
+                ${makeDetailRow('group', 'Related', item.related)}
+                ${makeDetailRow('public', 'Social/Web', item.social)}
+                <div style="margin-top:15px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px;">
+                    <strong>Notes:</strong><br>${item.notes || '-'}
+                </div>
+            `;
+
+            document.getElementById('btn-delete').onclick = () => deleteEntry(key);
+            document.getElementById('btn-edit').onclick = () => editEntry(key, item);
+            detailOverlay.style.display = 'flex';
+        };
+
+        function makeDetailRow(icon, label, val) {
+            if(!val || val === '-') return '';
+            return `
+                <div class="detail-row">
+                    <span class="material-symbols-outlined detail-icon">${icon}</span>
+                    <div class="detail-val">
+                        <span class="detail-label">${label}</span>
+                        ${val}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getInitials(name) {
+            const parts = name.split(' ');
+            if(parts.length > 1) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        window.deleteEntry = (key) => {
+            if(confirm("Delete this contact?")) {
+                connRef.child(key).remove();
+                closeDetail();
+            }
+        };
+
+        window.editEntry = (key, item) => {
+            currentEditingId = key;
+            document.getElementById('modal-title').textContent = "Edit Contact";
+            closeDetail();
+
+            document.getElementById('inp-name').value = item.name;
+            document.getElementById('inp-nick').value = item.nickname || '';
+            document.getElementById('inp-rel').value = item.relationship;
+            document.getElementById('inp-email').value = item.email || '';
+            
+            // Load Phones
+            document.getElementById('phone-container').innerHTML = '';
+            if(item.phones && item.phones.length > 0) {
+                item.phones.forEach(p => addPhoneField(p));
+            } else {
+                addPhoneField(); // Add one empty
+            }
+
+            document.getElementById('inp-company').value = item.company || '';
+            document.getElementById('inp-role').value = item.role || '';
+            document.getElementById('inp-work-contact').value = item.workContact || '';
+            
+            document.getElementById('inp-bday').value = item.birthday || '';
+            document.getElementById('inp-address').value = item.address || '';
+            document.getElementById('inp-related').value = item.related || '';
+            document.getElementById('inp-social').value = item.social || '';
+            document.getElementById('inp-notes').value = item.notes || '';
+
+            modalOverlay.style.display = 'flex';
+        };
+
+        // Nav
+        document.getElementById('back-btn').onclick = () => {
+            window.location.href = "PassHub-landing_page.html";
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeHub | Identity Verification</title>
+    <style>
+        /* --- QUIET LUXURY PALETTE --- */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #E8E6E1 0%, #D8D4CD 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #4A4A4A; /* Soft Charcoal */
+            --text-sub: #8C8C8C;  /* Muted Grey */
+            --accent: #6B6B61;    /* Deep Taupe */
+            --error: #B05C5C;     /* Muted Red */
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-gradient);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            overflow: hidden; /* Prevents scroll on lock screen */
+        }
+
+        /* --- THE GLASS CARD --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            border-radius: 16px;
+            padding: 50px 40px;
+            width: 340px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        h2 {
+            font-weight: 300;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            color: var(--accent);
+        }
+
+        /* --- INPUT STYLING --- */
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border-color: rgba(255,255,255, 0.8);
+        }
+
+        /* --- BUTTONS --- */
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .secondary-link {
+            font-size: 11px;
+            color: var(--text-sub);
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+            cursor: pointer;
+            border-bottom: 1px solid transparent;
+        }
+        .secondary-link:hover {
+            border-bottom-color: var(--text-sub);
+        }
+
+        /* --- UTILS --- */
+        .hidden { display: none; }
+        
+        #error-msg {
+            min-height: 20px;
+            margin-top: 20px;
+            font-size: 11px;
+            color: var(--error);
+            font-weight: 500;
+        }
+
+        /* SHAKE ANIMATION */
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel" id="login-card">
+        <h2>PassHub Access</h2>
+
+        <div id="step-1">
+            <div class="input-group">
+                <label>Authorized Personnel</label>
+                <input type="text" id="entry-name" placeholder="Name" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Security Code</label>
+                <input type="password" id="entry-pass" placeholder="••••">
+            </div>
+            <button id="verify-btn">Verify Identity</button>
+        </div>
+
+        <div id="step-2" class="hidden">
+            <p style="font-size: 13px; color: var(--text-main); margin-bottom: 20px; line-height: 1.5;">
+                Who is the best tinker?
+            </p>
+            <div class="input-group">
+                <input type="text" id="entry-answer" placeholder="Answer..." autocomplete="off">
+            </div>
+            <button id="unlock-btn">Unlock Hub</button>
+            
+            <div onclick="resetGate()" class="secondary-link">← Return</div>
+        </div>
+
+        <div id="error-msg"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <script src="js/PassHub-core.js"></script>
+
+<script>
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('PassHub Service Worker Registered'))
+                .catch(err => console.log('Service Worker Failed:', err));
+        });
+    }
+</script>
+
+
+</body>
+</html>
