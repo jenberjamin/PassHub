@@ -325,7 +325,10 @@
                     <div class="form-group"><label class="form-label">Address</label><input type="text" id="inp-address" class="form-input"></div>
                     <div class="form-group"><label class="form-label">Email</label><input type="email" id="inp-email" class="form-input"></div>
                     <div class="form-group"><label class="form-label">Link (Read Only)</label><input type="text" id="inp-link" class="form-input"></div>
-                    <div class="form-group"><label class="form-label">Notes</label><textarea id="inp-notes" class="form-input" rows="2"></textarea></div>
+                    <div class="form-group">
+    <label class="form-label">Notes</label>
+    <textarea id="inp-notes" class="form-input" rows="6" style="resize: vertical; min-height: 100px;"></textarea>
+</div>
                 </div>
 
                 <div class="btn-group">
@@ -606,9 +609,9 @@
                 ${makeRow('Email', item.email)}
                 ${makeRow('Link', item.link)}
                 
-                <div style="margin-top:15px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px;">
-                    <strong>Notes:</strong><br>${item.notes || '-'}
-                </div>
+                <div style="margin-top:15px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px; white-space: pre-wrap; line-height: 1.5;">
+    <strong>Notes:</strong><br>${item.notes || '-'}
+</div>
             `;
 
             document.getElementById('btn-delete').onclick = () => deleteEntry(key);
