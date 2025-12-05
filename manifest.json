@@ -1,5 +1,5 @@
 {
-  "name": "LifeHub | PassHub",
+  "name": "PassHub",
   "short_name": "PassHub",
   "start_url": "PassHub.html",
   "display": "standalone",
@@ -17,4 +17,5 @@
       "type": "image/png"
     }
   ]
+
 }
