@@ -7,6 +7,7 @@ const ASSETS_TO_CACHE = [
   "/PassHub-docs.html",
   "/PassHub-connections.html",
   "/PassHub-secure_notes.html",
+  "/PassHub-entry.html",
   "/manifest.json",
   "/js/PassHub-core.js",
   "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0",
@@ -47,3 +48,4 @@ self.addEventListener("fetch", (e) => {
   );
 
 });
+
