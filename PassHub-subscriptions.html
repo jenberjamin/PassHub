@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        if (!sessionStorage.getItem('PH_ACCESS_TOKEN')) {
+            window.location.href = "index.html";
+        }
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PassHub | Subscriptions</title>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <style>
+        /* --- QUIET LUXURY PALETTE --- */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #E8E6E1 0%, #D8D4CD 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #4A4A4A; 
+            --text-sub: #8C8C8C;  
+            --accent: #6B6B61;    
+            --danger: #B05C5C;
+            --gold: #C5A065;
+            --success: #5C946E;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background: var(--bg-gradient);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            overflow: hidden; 
+        }
+
+        /* --- HEADER --- */
+        header {
+            height: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 18px;
+            color: var(--accent);
+            margin: 0;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .nav-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-sub); transition: color 0.3s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .nav-btn:hover { color: var(--text-main); }
+        .nav-btn.primary {
+            background: var(--accent); color: white; padding: 8px 16px; border-radius: 4px;
+        }
+        .nav-btn.primary:hover { opacity: 0.9; }
+
+        /* --- FINANCIAL SUMMARY HEADER --- */
+        .money-summary {
+            text-align: center;
+            padding: 20px 0 0 0;
+            animation: fadeIn 0.5s ease;
+        }
+        .money-label { font-size: 10px; text-transform: uppercase; color: var(--text-sub); letter-spacing: 1px; }
+        .money-val { font-size: 24px; font-weight: 300; color: var(--text-main); letter-spacing: 1px; margin-top: 5px; }
+
+        /* --- MAIN CONTAINER --- */
+        main {
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            padding: 20px 40px 40px 40px;
+            box-sizing: border-box;
+        }
+
+        /* --- LIST VIEW --- */
+        .list-container {
+            max-width: 800px; 
+            margin: 20px auto 0 auto; 
+            display: block; /* Always visible now */
+            animation: fadeIn 0.4s ease;
+        }
+
+        .entry-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.4); margin-bottom: 10px; padding: 15px 20px;
+            border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s;
+        }
+        .entry-row:hover { background: white; border-color: rgba(0,0,0,0.05); }
+
+        .sub-left { display: flex; align-items: center; gap: 15px; }
+        
+        /* Updated Icon Style */
+        .sub-icon {
+            width: 36px; height: 36px; 
+            background: #D8D4CD; color: var(--accent);
+            border-radius: 8px; /* Softer square */
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sub-icon span { font-size: 20px; }
+
+        .sub-info { display: flex; flex-direction: column; }
+        .sub-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
+        .sub-meta { font-size: 10px; color: var(--text-sub); margin-top: 2px; }
+
+        .sub-right { text-align: right; }
+        .sub-cost { font-size: 13px; font-weight: 600; color: var(--text-main); }
+        .sub-date { font-size: 10px; color: var(--text-sub); display: block; margin-top: 3px; font-family: monospace; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-left: 5px; }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            z-index: 100; display: none; justify-content: center; align-items: center;
+        }
+        .modal-card {
+            background: #FDFDFD; width: 420px; padding: 30px; border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); animation: slideUp 0.3s ease;
+            max-height: 85vh; overflow-y: auto;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 5px; }
+        .form-input, .form-select {
+            width: 100%; padding: 10px; background: #F5F5F0; border: 1px solid #E0E0E0;
+            border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; color: var(--text-main);
+        }
+        .form-input:focus { background: white; border-color: var(--accent); }
+
+        .dual-input { display: flex; gap: 10px; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-main { flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-sec { flex: 1; padding: 12px; background: transparent; border: 1px solid #ccc; color: #888; border-radius: 6px; cursor: pointer; }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+
+        /* Detail View Specifics */
+        .detail-header { text-align: center; margin-bottom: 25px; }
+        .detail-cost-display { font-size: 28px; font-weight: 300; color: var(--text-main); }
+        .detail-cycle { font-size: 11px; text-transform: uppercase; color: var(--text-sub); letter-spacing: 1px; margin-top: 5px; }
+        
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; font-size: 13px; }
+        .detail-lbl { color: #999; font-size: 10px; text-transform: uppercase; }
+        
+        /* Status Badges */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+        .badge-active { background: rgba(92, 148, 110, 0.1); color: var(--success); }
+        .badge-trial { background: rgba(197, 160, 101, 0.1); color: var(--gold); }
+        .badge-cancel { background: rgba(176, 92, 92, 0.1); color: var(--danger); }
+        .badge-paused { background: #eee; color: #888; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="back-btn" class="nav-btn">← PassHub</button>
+        <h1>Subscriptions</h1>
+        <button id="new-btn" class="nav-btn primary">+ New</button>
+    </header>
+
+    <div class="money-summary">
+        <div class="money-label">Total Monthly Burn</div>
+        <div id="total-burn" class="money-val">$0.00</div>
+    </div>
+
+    <main>
+        <div id="entry-list-view" class="list-container">
+            <div id="entries-wrapper"></div>
+        </div>
+    </main>
+
+    <div id="modal-sub" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="font-size:14px; text-transform:uppercase; color:var(--accent); margin-bottom:20px; text-align:center;">Add Subscription</h2>
+            <form id="sub-form">
+                
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="inp-cat" class="form-select" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Service Name</label>
+                    <input type="text" id="inp-name" class="form-input" placeholder="e.g. Netflix" required>
+                </div>
+
+                <div class="dual-input">
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Cost</label>
+                        <input type="number" step="0.01" id="inp-cost" class="form-input" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group" style="width:100px;">
+                        <label class="form-label">Currency</label>
+                        <select id="inp-curr" class="form-select">
+                            <option value="$">$ (USD)</option>
+                            <option value="₱">₱ (PHP)</option>
+                            <option value="€">€ (EUR)</option>
+                            <option value="£">£ (GBP)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="dual-input">
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Billing Cycle</label>
+                        <select id="inp-cycle" class="form-select">
+                            <option value="Monthly">Monthly</option>
+                            <option value="Yearly">Yearly</option>
+                            <option value="Weekly">Weekly</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">First Bill Date</label>
+                        <input type="date" id="inp-date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <input type="text" id="inp-method" class="form-input" placeholder="e.g. Visa •••• 1234">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="inp-status" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Free Trial">Free Trial</option>
+                        <option value="Paused">Paused</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:15px; padding:10px; background:#f9f9f9; border-radius:6px;">
+                    <div style="font-size:11px; color:var(--accent); margin-bottom:5px;">Shared Subscription?</div>
+                    <div class="dual-input">
+                        <input type="text" id="inp-share-people" class="form-input" placeholder="Who with?">
+                        <input type="number" step="0.01" id="inp-share-cost" class="form-input" placeholder="My Share">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="inp-notes" class="form-input" rows="3" style="resize:vertical;"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn-sec" onclick="closeModals()">Cancel</button>
+                    <button type="submit" class="btn-main">Track It</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-detail" class="modal-overlay">
+        <div class="modal-card">
+            <div class="detail-header">
+                <div id="det-cost" class="detail-cost-display">$0.00</div>
+                <div id="det-name" style="font-size:16px; margin-top:5px; font-weight:600;">Service</div>
+                <div id="det-cycle" class="detail-cycle">Monthly</div>
+                <div id="det-badge" style="margin-top:10px;"></div>
+            </div>
+
+            <div id="det-content"></div>
+
+            <div class="btn-group">
+                <button id="btn-delete" class="btn-sec btn-danger">Delete</button>
+                <button id="btn-edit" class="btn-sec">Edit</button>
+                <button onclick="closeModals()" class="btn-main">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+        // --- 1. CONFIG ---
+        const CATEGORIES = [
+            { name: "Streaming", icon: "movie" },
+            { name: "Software", icon: "terminal" },
+            { name: "Fitness", icon: "fitness_center" },
+            { name: "Music", icon: "headphones" },
+            { name: "Gaming", icon: "sports_esports" },
+            { name: "Utilities", icon: "bolt" },
+            { name: "Learning", icon: "school" },
+            { name: "Work", icon: "business_center" },
+            { name: "Others", icon: "receipt_long" }
+        ];
+
+        // Helper to find icon by category name
+        function getCatIcon(catName) {
+            const found = CATEGORIES.find(c => c.name === catName);
+            return found ? found.icon : 'receipt';
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD4AwI1GwDvtx8y6yx6We-oSzV92GGCEvE",
+            authDomain: "access-vault-a3d09.firebaseapp.com",
+            databaseURL: "https://access-vault-a3d09-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "access-vault-a3d09",
+            storageBucket: "access-vault-a3d09.firebasestorage.app",
+            messagingSenderId: "43855013406",
+            appId: "1:43855013406:web:6a954853b8c14ec785b00f",
+            measurementId: "G-Q925D3PS6V"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const subRef = db.ref('subscriptions');
+
+        // State
+        let allSubs = {};
+        let currentEditingId = null;
+
+        // --- 2. LOGIC ---
+
+        subRef.on('value', (snapshot) => {
+            allSubs = snapshot.val() || {};
+            calculateTotalBurn();
+            renderList(); // Auto render the list
+        });
+
+        function calculateTotalBurn() {
+            let total = 0;
+            let currency = '$'; // Assuming primary currency
+            
+            Object.values(allSubs).forEach(sub => {
+                if(sub.status === 'Active') {
+                    let cost = parseFloat(sub.shareCost || sub.cost);
+                    if(sub.cycle === 'Yearly') cost = cost / 12;
+                    if(sub.cycle === 'Weekly') cost = cost * 4;
+                    total += cost;
+                    if(sub.currency) currency = sub.currency;
+                }
+            });
+            document.getElementById('total-burn').textContent = `${currency}${total.toFixed(2)}`;
+        }
+
+        function renderList() {
+            const listWrapper = document.getElementById('entries-wrapper');
+            listWrapper.innerHTML = '';
+            
+            // 1. Convert to Array and Add "Next Bill Date" Object
+            let subArray = Object.entries(allSubs).map(([key, item]) => {
+                const nextDate = getNextBillDate(item.startDate, item.cycle);
+                return {
+                    key: key,
+                    ...item,
+                    nextBillDate: nextDate // Store date object for sorting
+                };
+            });
+
+            // 2. Sort by Date (Earliest first)
+            subArray.sort((a, b) => a.nextBillDate - b.nextBillDate);
+
+            if (subArray.length === 0) {
+                listWrapper.innerHTML = '<div style="text-align:center; color:#ccc; margin-top:40px;">No subscriptions tracked.</div>';
+                return;
+            }
+
+            // 3. Render
+            subArray.forEach(item => {
+                const nextDateStr = item.nextBillDate.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+                
+                // Status Color
+                let statusColor = '#ccc';
+                if(item.status === 'Active') statusColor = 'var(--success)';
+                if(item.status === 'Free Trial') statusColor = 'var(--gold)';
+                if(item.status === 'Cancelled') statusColor = 'var(--danger)';
+
+                // Get Icon based on Category
+                const catIcon = getCatIcon(item.category);
+
+                const row = document.createElement('div');
+                row.className = 'entry-row';
+                row.innerHTML = `
+                    <div class="sub-left">
+                        <div class="sub-icon">
+                            <span class="material-symbols-outlined">${catIcon}</span>
+                        </div>
+                        <div class="sub-info">
+                            <div class="sub-name">${item.name}</div>
+                            <div class="sub-meta">${item.category} • ${item.method || 'No Card'}</div>
+                        </div>
+                    </div>
+                    <div class="sub-right">
+                        <div class="sub-cost">${item.currency}${item.cost}</div>
+                        <div class="sub-date">Due: ${nextDateStr} <span class="status-dot" style="background:${statusColor}"></span></div>
+                    </div>
+                `;
+                row.onclick = () => openDetail(item.key, item);
+                listWrapper.appendChild(row);
+            });
+        }
+
+        // --- 3. UTILS (Date Logic) ---
+        function getNextBillDate(startDate, cycle) {
+            if(!startDate) return new Date();
+            const start = new Date(startDate);
+            const now = new Date();
+            // Reset time to avoid timezone bugs
+            now.setHours(0,0,0,0);
+            start.setHours(0,0,0,0);
+            
+            let next = new Date(start);
+
+            // If cancelled, just show original date (or handle differently)
+            // But if active, calculate next occurrence
+            while (next < now) {
+                if(cycle === 'Monthly') next.setMonth(next.getMonth() + 1);
+                else if(cycle === 'Yearly') next.setFullYear(next.getFullYear() + 1);
+                else if(cycle === 'Weekly') next.setDate(next.getDate() + 7);
+                else next.setMonth(next.getMonth() + 1); 
+            }
+            return next;
+        }
+
+        document.getElementById('back-btn').onclick = () => {
+            window.location.href = "PassHub-landing_page.html";
+        };
+
+        // --- 4. MODALS & FORM ---
+        const modalSub = document.getElementById('modal-sub');
+        const modalDetail = document.getElementById('modal-detail');
+        const form = document.getElementById('sub-form');
+        
+        // Populate Categories
+        const catSelect = document.getElementById('inp-cat');
+        CATEGORIES.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name; opt.textContent = c.name;
+            catSelect.appendChild(opt);
+        });
+
+        document.getElementById('new-btn').onclick = () => {
+            currentEditingId = null;
+            form.reset();
+            document.getElementById('inp-date').valueAsDate = new Date();
+            modalSub.style.display = 'flex';
+        };
+
+        window.closeModals = () => {
+            modalSub.style.display = 'none';
+            modalDetail.style.display = 'none';
+        };
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const data = {
+                category: document.getElementById('inp-cat').value,
+                name: document.getElementById('inp-name').value,
+                cost: document.getElementById('inp-cost').value,
+                currency: document.getElementById('inp-curr').value,
+                cycle: document.getElementById('inp-cycle').value,
+                startDate: document.getElementById('inp-date').value,
+                method: document.getElementById('inp-method').value,
+                status: document.getElementById('inp-status').value,
+                shareWith: document.getElementById('inp-share-people').value,
+                shareCost: document.getElementById('inp-share-cost').value,
+                notes: document.getElementById('inp-notes').value,
+                timestamp: Date.now()
+            };
+
+            if(currentEditingId) subRef.child(currentEditingId).update(data);
+            else subRef.push(data);
+            
+            closeModals();
+        });
+
+        // --- 5. DETAIL VIEW ---
+        window.openDetail = (key, item) => {
+            // Re-calculate date for detail view
+            const nextDate = getNextBillDate(item.startDate, item.cycle);
+            const nextStr = nextDate.toLocaleDateString(undefined, {weekday:'short', year:'numeric', month:'long', day:'numeric'});
+
+            document.getElementById('det-cost').textContent = `${item.currency}${item.cost}`;
+            document.getElementById('det-name').textContent = item.name;
+            document.getElementById('det-cycle').textContent = item.cycle;
+
+            // Badge
+            let badgeClass = 'badge-active';
+            if(item.status === 'Free Trial') badgeClass = 'badge-trial';
+            if(item.status === 'Cancelled') badgeClass = 'badge-cancel';
+            if(item.status === 'Paused') badgeClass = 'badge-paused';
+            
+            document.getElementById('det-badge').innerHTML = `<span class="badge ${badgeClass}">${item.status}</span>`;
+
+            const content = document.getElementById('det-content');
+            
+            const shareInfo = item.shareWith ? `Shared with ${item.shareWith} (My part: ${item.currency}${item.shareCost})` : 'No';
+
+            content.innerHTML = `
+                <div style="height:20px;"></div>
+                ${row('Next Billing', nextStr)}
+                ${row('Category', item.category)}
+                ${row('Payment Method', item.method)}
+                ${row('Started On', item.startDate)}
+                ${row('Split / Shared', shareInfo)}
+                <div style="margin-top:20px; font-size:12px; color:#555; background:#f9f9f9; padding:10px; border-radius:4px; white-space: pre-wrap;">
+                    <strong>Notes:</strong><br>${item.notes || '-'}
+                </div>
+            `;
+
+            document.getElementById('btn-delete').onclick = () => deleteEntry(key);
+            document.getElementById('btn-edit').onclick = () => editEntry(key, item);
+            modalDetail.style.display = 'flex';
+        };
+
+        function row(lbl, val) {
+            return `<div class="detail-row"><span class="detail-lbl">${lbl}</span><span>${val}</span></div>`;
+        }
+
+        window.deleteEntry = (key) => {
+            if(confirm("Delete this subscription?")) {
+                subRef.child(key).remove();
+                closeModals();
+            }
+        };
+
+        window.editEntry = (key, item) => {
+            currentEditingId = key;
+            closeModals();
+            
+            document.getElementById('inp-cat').value = item.category;
+            document.getElementById('inp-name').value = item.name;
+            document.getElementById('inp-cost').value = item.cost;
+            document.getElementById('inp-curr').value = item.currency;
+            document.getElementById('inp-cycle').value = item.cycle;
+            document.getElementById('inp-date').value = item.startDate;
+            document.getElementById('inp-method').value = item.method;
+            document.getElementById('inp-status').value = item.status;
+            document.getElementById('inp-share-people').value = item.shareWith || '';
+            document.getElementById('inp-share-cost').value = item.shareCost || '';
+            document.getElementById('inp-notes').value = item.notes || '';
+
+            modalSub.style.display = 'flex';
+        };
+
+    </script>
+</body>
+</html>
